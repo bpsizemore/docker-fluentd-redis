@@ -1,12 +1,19 @@
-FROM kiyoto/fluentd:0.10.56-2.1.1
-MAINTAINER kiyoto@treausure-data.com
+FROM fluent/fluentd
+MAINTAINER bpsizemore@gmail.com
+
+USER root
 RUN mkdir /etc/fluent
 ADD fluent.conf /etc/fluent/
 
-RUN ["/usr/local/bin/gem", "install", "fluent-plugin-docker_metadata_filter"]
-RUN ["/usr/local/bin/gem", "install", "fluent-plugin-record-modifier"]
-RUN ["/usr/local/bin/gem", "install", "fluent-plugin-rename-key"]
-RUN ["/usr/local/bin/gem", "install", "fluent-plugin-redis-store"]
-RUN ["/usr/local/bin/gem", "install", "fluent-plugin-record-reformer", "--no-rdoc", "--no-ri"]
+RUN mkdir /etc/fluent/gems
+ADD gems /etc/fluent/gems
+RUN for gem in $(ls /etc/fluent/gems/); do gem install /etc/fluent/gems/$gem; done
 
-ENTRYPOINT ["/usr/local/bin/fluentd", "-c", "/etc/fluent/fluent.conf"]
+
+
+RUN ["gem", "install", "fluent-plugin-record-reformer", "--no-rdoc", "--no-ri"]
+RUN ["gem", "install", "fluent-plugin-docker_metadata_filter"]
+RUN ["gem", "install", "fluent-plugin-record-modifier"]
+RUN ["gem", "install", "fluent-plugin-rename-key"]
+
+ENTRYPOINT ["fluentd", "-c", "/etc/fluent/fluent.conf"]
